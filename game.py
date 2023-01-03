@@ -1,6 +1,7 @@
 import pygame
 import sys
 import os
+import pyganim
 
 
 FPS = 60
@@ -24,6 +25,24 @@ def load_image(name, colorkey=None):
     else:
         image = image.convert_alpha()
     return image
+
+
+class Dino:
+    def __init__(self, x, y):
+        run_sprites = []
+        run_sprites.append(pygame.transform.scale(load_image('динозавр1.png'), (200, 200)))
+        run_sprites.append(pygame.transform.scale(load_image('динозавр2.png'), (200, 200)))
+        run_sprites.append(pygame.transform.scale(load_image('динозавр3.png'), (200, 200)))
+        run_sprites.append(pygame.transform.scale(load_image('динозавр4.png'), (200, 200)))
+        self.runAnim = pyganim.PygAnimation([(run_sprites[0], 70),
+                                             (run_sprites[1], 70),
+                                             (run_sprites[2], 70),
+                                             (run_sprites[3], 70)])
+        self.jumpAnim = pyganim.PygAnimation([(run_sprites[0], 70)])
+        self.runAnim.play()
+        self.jumpAnim.play()
+        self.x = x
+        self.y = y
 
 
 def terminate():
@@ -68,12 +87,14 @@ def game():
     sand = load_image('fon.png')
     sand = pygame.transform.scale(sand, (800, 150))
     screen.blit(sand, (0, HEIGHT - sand.get_height()))
+    dino = Dino(100, 300)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                pass
+        screen.fill((135, 206, 250))
+        screen.blit(sand, (0, HEIGHT - sand.get_height()))
+        dino.runAnim.blit(screen, (100, 300))
         pygame.display.flip()
         clock.tick(FPS)
 
