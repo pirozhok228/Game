@@ -43,6 +43,23 @@ class Dino:
         self.jumpAnim.play()
         self.x = x
         self.y = y
+        self.isJump = False
+        self.jumpSpeed = 10
+
+    def update(self):
+        if self.isJump:
+            if self.jumpSpeed >= -10:
+                if self.jumpSpeed < 0:
+                    self.y += (self.jumpSpeed ** 2) / 2
+                else:
+                    self.y -= (self.jumpSpeed ** 2) / 2
+                self.jumpSpeed -= 1
+                self.jumpAnim.blit(screen, (self.x, self.y))
+            else:
+                self.jumpSpeed = 10
+                self.isJump = False
+        if self.isJump is False:
+            self.runAnim.blit(screen, (self.x, self.y))
 
 
 def terminate():
@@ -92,9 +109,11 @@ def game():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                dino.isJump = True
         screen.fill((135, 206, 250))
         screen.blit(sand, (0, HEIGHT - sand.get_height()))
-        dino.runAnim.blit(screen, (100, 300))
+        dino.update()
         pygame.display.flip()
         clock.tick(FPS)
 
