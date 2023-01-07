@@ -2,6 +2,7 @@ import pygame
 import sys
 import os
 import pyganim
+import random
 
 
 FPS = 60
@@ -44,22 +45,39 @@ class Dino:
         self.x = x
         self.y = y
         self.isJump = False
-        self.jumpSpeed = 10
+        self.jumpSpeed = 11
 
     def update(self):
         if self.isJump:
-            if self.jumpSpeed >= -10:
+            if self.jumpSpeed >= -11:
                 if self.jumpSpeed < 0:
-                    self.y += (self.jumpSpeed ** 2) / 2
+                    self.y += (self.jumpSpeed ** 2) / 1.8
                 else:
-                    self.y -= (self.jumpSpeed ** 2) / 2
+                    self.y -= (self.jumpSpeed ** 2) / 1.8
                 self.jumpSpeed -= 1
                 self.jumpAnim.blit(screen, (self.x, self.y))
             else:
-                self.jumpSpeed = 10
+                self.jumpSpeed = 11
                 self.isJump = False
-        if self.isJump is False:
+        else:
             self.runAnim.blit(screen, (self.x, self.y))
+
+
+class Cactus(pygame.sprite.Sprite):
+    image = load_image('кактус.png')
+
+    def __init__(self, group, size, x, y):
+        super().__init__(group)
+        self.image = Cactus.image
+        self.image = pygame.transform.scale(self.image, (size - 30, size))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+    def update(self):
+        self.rect.x -= 13
+        if self.rect.x + self.image.get_width() < 0:
+            Cactus.kill(self)
 
 
 def terminate():
@@ -104,15 +122,25 @@ def game():
     sand = load_image('fon.png')
     sand = pygame.transform.scale(sand, (800, 150))
     screen.blit(sand, (0, HEIGHT - sand.get_height()))
+    cactus_sprites = pygame.sprite.Group()
     dino = Dino(100, 300)
+    size_cactus = random.randrange(100, 151, 50)
+    a = WIDTH
+    Cactus(cactus_sprites, size_cactus, a, HEIGHT - sand.get_height() - size_cactus + 50)
+    a += 500
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 dino.isJump = True
+        size_cactus = random.randrange(100, 151, 50)
+        a += 500
+        Cactus(cactus_sprites, size_cactus, a, HEIGHT - sand.get_height() - size_cactus + 50)
         screen.fill((135, 206, 250))
         screen.blit(sand, (0, HEIGHT - sand.get_height()))
+        cactus_sprites.draw(screen)
+        cactus_sprites.update()
         dino.update()
         pygame.display.flip()
         clock.tick(FPS)
