@@ -10,6 +10,7 @@ pygame.init()
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Бегущий динозавр')
 game_over = False
+pause = False
 
 
 def load_image(name, colorkey=None):
@@ -45,7 +46,7 @@ class Dino(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
 
     def update(self):
-        if not game_over:
+        if not game_over and not pause:
             if self.cur_frame == 12:
                 self.cur_frame = 0
             self.image = self.frames[self.cur_frame // 4]
@@ -77,7 +78,7 @@ class Cactus(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
 
     def update(self):
-        if not game_over:
+        if not game_over and not pause:
             self.rect.x -= 13
             if self.rect.x + self.image.get_width() < 0:
                 self.group.remove(self)
@@ -100,6 +101,14 @@ def gameover(group1, group2):
                             terminate()
                     pygame.display.flip()
                     clock.tick(FPS)
+
+
+def pause_game():
+    global pause
+    if pause is False:
+        pause = True
+    else:
+        pause = False
 
 
 def terminate():
@@ -157,6 +166,8 @@ def game():
                 terminate()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 dino.isJump = True
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                pause_game()
         gameover(dino_sprites, cactus_sprites)
         size_cactus = random.randrange(100, 151, 50)
         a += 500
