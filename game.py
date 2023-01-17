@@ -11,6 +11,8 @@ screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Бегущий динозавр')
 game_over = False
 pause = False
+score = 0
+score_pause = 0
 
 
 def load_image(name, colorkey=None):
@@ -111,6 +113,19 @@ def pause_game():
         pause = False
 
 
+def score_blit():
+    global score, score_pause
+    font = pygame.font.Font('data/font.otf', 70)
+    text = font.render(str(score), True, (0, 100, 0))
+    text_x = 50
+    text_y = 50
+    screen.blit(text, (text_x, text_y))
+    score_pause += 1
+    if score_pause == 5:
+        score += 1
+        score_pause = 0
+
+
 def terminate():
     pygame.quit()
     sys.exit()
@@ -178,6 +193,7 @@ def game():
         cactus_sprites.update()
         dino_sprites.draw(screen)
         dino_sprites.update()
+        score_blit()
         pygame.display.flip()
         clock.tick(FPS)
 
