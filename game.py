@@ -1,7 +1,6 @@
 import pygame
 import sys
 import os
-import pyganim
 import random
 
 
@@ -10,6 +9,7 @@ size = WIDTH, HEIGHT = 800, 600
 pygame.init()
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption('Бегущий динозавр')
+game_over = False
 
 
 def load_image(name, colorkey=None):
@@ -28,39 +28,39 @@ def load_image(name, colorkey=None):
     return image
 
 
-class Dino:
-    def __init__(self, x, y):
-        run_sprites = []
-        run_sprites.append(pygame.transform.scale(load_image('динозавр1.png'), (200, 200)))
-        run_sprites.append(pygame.transform.scale(load_image('динозавр2.png'), (200, 200)))
-        run_sprites.append(pygame.transform.scale(load_image('динозавр3.png'), (200, 200)))
-        run_sprites.append(pygame.transform.scale(load_image('динозавр4.png'), (200, 200)))
-        self.runAnim = pyganim.PygAnimation([(run_sprites[0], 70),
-                                             (run_sprites[1], 70),
-                                             (run_sprites[2], 70),
-                                             (run_sprites[3], 70)])
-        self.jumpAnim = pyganim.PygAnimation([(run_sprites[0], 70)])
-        self.runAnim.play()
-        self.jumpAnim.play()
-        self.x = x
-        self.y = y
+class Dino(pygame.sprite.Sprite):
+    def __init__(self, group, x, y):
+        super().__init__(group)
+        self.frames = [pygame.transform.scale(load_image('динозавр1.png'), (200, 200)),
+                       pygame.transform.scale(load_image('динозавр2.png'), (200, 200)),
+                       pygame.transform.scale(load_image('динозавр3.png'), (200, 200)),
+                       pygame.transform.scale(load_image('динозавр4.png'), (200, 200))]
+        self.cur_frame = 12
+        self.image = self.frames[0]
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
         self.isJump = False
         self.jumpSpeed = 11
+        self.mask = pygame.mask.from_surface(self.image)
 
     def update(self):
-        if self.isJump:
-            if self.jumpSpeed >= -11:
-                if self.jumpSpeed < 0:
-                    self.y += (self.jumpSpeed ** 2) / 1.8
+        if not game_over:
+            if self.cur_frame == 12:
+                self.cur_frame = 0
+            self.image = self.frames[self.cur_frame // 4]
+            self.cur_frame += 1
+            if self.isJump:
+                if self.jumpSpeed >= -11:
+                    if self.jumpSpeed < 0:
+                        self.rect.y += (self.jumpSpeed ** 2) // 1.8
+                    else:
+                        self.rect.y -= (self.jumpSpeed ** 2) // 1.8
+                    self.jumpSpeed -= 1
+                    self.image = self.frames[0]
                 else:
-                    self.y -= (self.jumpSpeed ** 2) / 1.8
-                self.jumpSpeed -= 1
-                self.jumpAnim.blit(screen, (self.x, self.y))
-            else:
-                self.jumpSpeed = 11
-                self.isJump = False
-        else:
-            self.runAnim.blit(screen, (self.x, self.y))
+                    self.jumpSpeed = 11
+                    self.isJump = False
 
 
 class Cactus(pygame.sprite.Sprite):
@@ -68,16 +68,38 @@ class Cactus(pygame.sprite.Sprite):
 
     def __init__(self, group, size, x, y):
         super().__init__(group)
+        self.group = group
         self.image = Cactus.image
         self.image = pygame.transform.scale(self.image, (size - 30, size))
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+        self.mask = pygame.mask.from_surface(self.image)
 
     def update(self):
-        self.rect.x -= 13
-        if self.rect.x + self.image.get_width() < 0:
-            Cactus.kill(self)
+        if not game_over:
+            self.rect.x -= 13
+            if self.rect.x + self.image.get_width() < 0:
+                self.group.remove(self)
+
+
+def gameover(group1, group2):
+    global game_over
+    for i in group1:
+        for j in group2:
+            if pygame.sprite.collide_mask(i, j):
+                game_over = True
+                font = pygame.font.Font('data/font.otf', 70)
+                text = font.render('Game over', True, (0, 100, 0))
+                text_x = WIDTH // 2 - text.get_width() // 2
+                text_y = 100
+                screen.blit(text, (text_x, text_y))
+                while True:
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            terminate()
+                    pygame.display.flip()
+                    clock.tick(FPS)
 
 
 def terminate():
@@ -123,7 +145,8 @@ def game():
     sand = pygame.transform.scale(sand, (800, 150))
     screen.blit(sand, (0, HEIGHT - sand.get_height()))
     cactus_sprites = pygame.sprite.Group()
-    dino = Dino(100, 300)
+    dino_sprites = pygame.sprite.Group()
+    dino = Dino(dino_sprites, 100, 300)
     size_cactus = random.randrange(100, 151, 50)
     a = WIDTH
     Cactus(cactus_sprites, size_cactus, a, HEIGHT - sand.get_height() - size_cactus + 50)
@@ -134,6 +157,7 @@ def game():
                 terminate()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 dino.isJump = True
+        gameover(dino_sprites, cactus_sprites)
         size_cactus = random.randrange(100, 151, 50)
         a += 500
         Cactus(cactus_sprites, size_cactus, a, HEIGHT - sand.get_height() - size_cactus + 50)
@@ -141,7 +165,8 @@ def game():
         screen.blit(sand, (0, HEIGHT - sand.get_height()))
         cactus_sprites.draw(screen)
         cactus_sprites.update()
-        dino.update()
+        dino_sprites.draw(screen)
+        dino_sprites.update()
         pygame.display.flip()
         clock.tick(FPS)
 
