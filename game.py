@@ -101,8 +101,6 @@ def gameover(group1, group2):
                     for event in pygame.event.get():
                         if event.type == pygame.QUIT:
                             terminate()
-                    pygame.display.flip()
-                    clock.tick(FPS)
 
 
 def pause_game():
@@ -120,10 +118,11 @@ def score_blit():
     text_x = 50
     text_y = 50
     screen.blit(text, (text_x, text_y))
-    score_pause += 1
-    if score_pause == 5:
-        score += 1
-        score_pause = 0
+    if pause is False:
+        score_pause += 1
+        if score_pause == 5:
+            score += 1
+            score_pause = 0
 
 
 def terminate():
